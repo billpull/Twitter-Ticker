@@ -29,20 +29,24 @@ function wait(){
 				},
 				success: function(data){
 				var quote = data.query.results.quote;
+				console.log(quote);
 				if ( quote ){
 					var change = quote.Change;
 					var change_pct = quote.ChangeinPercent.replace('+','');
 					var quote_price = quote.LastTradePriceOnly;
 					var html_str = "";
 
-					if( change.indexOf("+") != -1 ){
-						tooltip_str = '<span class="symInfo up">'+change+' ('+change_pct+')</span>';
+					if (quote_price){
+
+					  if( change.indexOf("+") != -1 ){
+						tooltip_str = '<span class="symInfo up">'+quote_price+' ('+change_pct+')</span>';
 						html_str = '<span class="symWrap up">'+replace_args[0]+tooltip_str+'</span>';
 						html_str = '<a class="yahooLink" target="_blank" href="'+finance_pg+'">'+html_str+'</a>';
-					}else{
-						tooltip_str = '<span class="symInfo down">'+change+' ('+change_pct+')</span>';
+					  }else{
+						tooltip_str = '<span class="symInfo down">'+quote_price+' ('+change_pct+')</span>';
 						html_str = '<span class="symWrap down">'+replace_args[0]+tooltip_str+'</span>';
 						html_str = '<a class="yahooLink" target="_blank" href="'+finance_pg+'">'+html_str+'</a>';
+					  }
 					}
 
 					tweet_html = tweet_html.replace(symbol_pat,html_str);
