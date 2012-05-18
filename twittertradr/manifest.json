@@ -1,0 +1,16 @@
+{
+  "name": "TwitterTicker",
+  "version": "1.0",
+  "description": "Replaces Stock symbols in Twitter streams.",
+  "browser_action": {
+    "default_icon": "icon.png"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://*.twitter.com/*"],
+      "css": ["style.css"],
+      "js": ["jquery.js", "twittertradr.js"],
+	  "run_at": "document_end"
+    }
+   ]
+}
