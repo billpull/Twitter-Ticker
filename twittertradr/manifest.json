@@ -10,7 +10,7 @@
       "matches": ["https://*.twitter.com/*"],
       "css": ["style.css"],
       "js": ["jquery.js", "twittertradr.js"],
-	  "run_at": "document_end"
+	"run_at": "document_idle"
     }
    ]
 }

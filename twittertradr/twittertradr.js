@@ -1,9 +1,15 @@
 $(function(){
-    wait();
+    console.log('Twitter Ticker init');
+    replaceStockSymbols();
+
+   $('.new-tweets-bar').click(function(){
+	setTimeout(replaeStockSymbols, 500);
+   });
 });
 
-function wait(){
-	if( $('.stream').html() ){
+function replaceStockSymbols(){
+	if( $('.js-tweet-text').html() ){
+		console.log('Twitter Stream Loaded');
 		var tweets = $('.js-tweet-text');
 		var symbol_pat = /(\$)([a-z]+\b)/gi;
 		$.each(tweets, function(){
@@ -57,6 +63,6 @@ function wait(){
 		  });
 		});
 	}else{
-	   setTimeout( wait, 500 );
+	   setTimeout( replaceStockSymbols, 200 );
 	}
 }
