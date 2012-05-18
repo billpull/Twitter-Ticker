@@ -39,11 +39,11 @@ function wait(){
 					if (quote_price){
 
 					  if( change.indexOf("+") != -1 ){
-						tooltip_str = '<span class="symInfo up">'+quote_price+' ('+change_pct+')</span>';
+						tooltip_str = '<span class="symInfo up"><span class="regTxt">'+quote_price+'</span> ('+change_pct+')</span>';
 						html_str = '<span class="symWrap up">'+replace_args[0]+tooltip_str+'</span>';
 						html_str = '<a class="yahooLink" target="_blank" href="'+finance_pg+'">'+html_str+'</a>';
 					  }else{
-						tooltip_str = '<span class="symInfo down">'+quote_price+' ('+change_pct+')</span>';
+						tooltip_str = '<span class="symInfo down"><span class="regTxt">'+quote_price+'</span> ('+change_pct+')</span>';
 						html_str = '<span class="symWrap down">'+replace_args[0]+tooltip_str+'</span>';
 						html_str = '<a class="yahooLink" target="_blank" href="'+finance_pg+'">'+html_str+'</a>';
 					  }
