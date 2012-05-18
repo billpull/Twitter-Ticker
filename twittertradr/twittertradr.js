@@ -1,5 +1,4 @@
 $(function(){
-    console.log('Twitter Ticker init');
     replaceStockSymbols();
 
    $('.new-tweets-bar').click(function(){
@@ -9,13 +8,12 @@ $(function(){
 
 function replaceStockSymbols(){
 	if( $('.js-tweet-text').html() ){
-		console.log('Twitter Stream Loaded');
 		var tweets = $('.js-tweet-text');
 		var symbol_pat = /(\$)([a-z]+\b)/gi;
 		$.each(tweets, function(){
 		   var that = this;
 		   var tweet_html = $(that).html();
-           tweet_html = tweet_html.replace(symbol_pat,function(){
+           	   tweet_html = tweet_html.replace(symbol_pat,function(){
 			   var replace_args = arguments;
 			   var symbol = replace_args[2];
 			   var YAHOO_API_URL = 'http://query.yahooapis.com/v1/public/yql'
@@ -35,17 +33,13 @@ function replaceStockSymbols(){
 				},
 				success: function(data){
 				var quote = data.query.results.quote;
-				console.log(quote);
 				if ( quote ){
 					var change = quote.Change;
 					var change_pct = quote.ChangeinPercent;
 					var quote_price = quote.LastTradePriceOnly;
 					var html_str = "";
 
-					var symbol = replace_args[0].replace('$','');
-
 					if (quote_price){
-					  console.log(replace_args[0],quote_price,change);
 
 					  if( change.indexOf("+") != -1 ){
 						tooltip_str = '<span class="symInfo up"><span class="regTxt">'+quote_price+'</span> ('+change_pct+')</span>';
@@ -58,7 +52,7 @@ function replaceStockSymbols(){
 					  }
 					}
 
-					tweet_html = tweet_html.replace(symbol_pat,html_str);
+					tweet_html = tweet_html.replace(replace_args[0],html_str);
 					$(that).html(tweet_html);
 				}
 			}
