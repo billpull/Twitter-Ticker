@@ -1,5 +1,30 @@
 var $tt = jQuery.noConflict();
 
+var pos_tmpl = "\
+	<a class='yahooLink' target='_blank' href='<%= link %>'>\
+		<span class='symWrap up'><%= symbol %>\
+			<span class='symInfo up'>\
+				<span class='regTxt'><%= quote %></span> (<%= change %>)\
+			</span>\
+		</span>\
+	</a>";
+var neg_tmpl = "\
+	<a class='yahooLink' target='_blank' href='<%= link %>'>\
+		<span class='symWrap down'><%= symbol %>\
+			<span class='symInfo down'>\
+				<span class='regTxt'><%= quote %></span> (<%= change %>)\
+			</span>\
+		</span>\
+	</a>";
+var neu_tmpl = "\
+	<a class='yahooLink' target='_blank' href='<%= link %>'>\
+		<span class='symWrap nochange'><%= symbol %>\
+			<span class='symInfo nochange'>\
+				<span class='regTxt'><%= quote %></span> (<%= change %>)\
+			</span>\
+		</span>\
+	</a>";
+
 $tt(function(){
     replaceStockSymbols();
 
@@ -23,23 +48,22 @@ function replaceStockSymbols(){
 			for( var i = 0; i < quotes.length; i++ ){
 			  var quote = quotes[i];
 			  var change = quote.Change;
-			  var change_pct = quote.ChangeinPercent;
-			  var quote_price = quote.LastTradePriceOnly;
 			  var finance_pg = "http://finance.yahoo.com/q?s="+quote.Symbol.toLowerCase()+"&ql=1";
-			  var html_str = "";
+			  var html_str = null;
+
+			  var quote_dict = {
+				'link':finance_pg,
+				'symbol':quote.Symbol,
+				'quote':quote.LastTradePriceOnly,
+				'change':quote.ChangeinPercent
+			  };
 
 			    if( change.indexOf("+") != -1 ){
-				tooltip_str = '<span class="symInfo up"><span class="regTxt">'+quote_price+'</span> ('+change_pct+')</span>';
-				html_str = '<span class="symWrap up">'+quote.Symbol+tooltip_str+'</span>';
-				html_str = '<a class="yahooLink" target="_blank" href="'+finance_pg+'">'+html_str+'</a>';
+				html_str = _.template(pos_tmpl, quote_dict);
 			    }else if( change.indexOf("-") != -1 ){
-				tooltip_str = '<span class="symInfo down"><span class="regTxt">'+quote_price+'</span> ('+change_pct+')</span>';
-				html_str = '<span class="symWrap down">'+quote.Symbol+tooltip_str+'</span>';
-				html_str = '<a class="yahooLink" target="_blank" href="'+finance_pg+'">'+html_str+'</a>';
+				html_str = _.template(neg_tmpl, quote_dict);
 			    }else{
-				tooltip_str = '<span class="symInfo nochange"><span class="regTxt">'+quote_price+'</span> ('+change_pct+')</span>';
-				html_str = '<span class="symWrap nochange">'+quote.Symbol+tooltip_str+'</span>';
-				html_str = '<a class="yahooLink" target="_blank" href="'+finance_pg+'">'+html_str+'</a>';
+				html_str = _.template(neu_tmpl, quote_dict);
 			    }
  
 			  parsed_quotes[quote.Symbol] = html_str;
