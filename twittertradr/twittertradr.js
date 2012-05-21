@@ -1,5 +1,6 @@
 var $tt = jQuery.noConflict();
 
+/*===Templates===*/
 var pos_tmpl = "\
 	<a class='yahooLink' target='_blank' href='http://finance.yahoo.com/q?s=<%= symbol %>&ql=1'>\
 		<span class='symWrap up'><%= symbol %>\
@@ -31,20 +32,48 @@ $tt(function(){
 });
 
 function replaceStockSymbols(){
+  //Check for tweet text
   if( $tt('.js-tweet-text').html() ){
     var tweets = $tt('.js-tweet-text');
+
+    //Search Document for $SYMBOL pattern
     var symbol_pat = /(\$)([a-z]+\b)/gi;
     var twitter_html = $tt('body').html();
     var symbols = twitter_html.match(symbol_pat);
 
     if ( symbols ){
       queryYahooFinance(symbols, function(data){
-      var quotes = data.query.results.quote;
-      var parsed_quotes = {};
+        var quotes = data.query.results.quote;
+        var parsed_quotes = {};
 
-      if( quotes.length !== undefined){
-        $tt.each(quotes, function(){
-          var quote = this;
+        //Iterate over query results
+        if( quotes.length !== undefined){
+          $tt.each(quotes, function(){
+            var quote = this;
+            var change = quote.Change;
+            var html_str = null;
+
+            if( change === undefined ){ change = '0'; }
+            var quote_dict = {
+              'symbol':quote.Symbol,
+              'quote':quote.LastTradePriceOnly,
+              'change':quote.ChangeinPercent
+            };
+
+	    //Render template strings
+            if( change.indexOf("+") != -1 ){
+              html_str = _.template(pos_tmpl, quote_dict);
+            }else if( change.indexOf("-") != -1 ){
+              html_str = _.template(neg_tmpl, quote_dict);
+            }else{
+              html_str = _.template(neu_tmpl, quote_dict);
+            }
+
+	    //Create dictionary of symbol:html
+            parsed_quotes[quote.Symbol] = html_str;
+          });
+        }else{
+          var quote = quotes;
           var change = quote.Change;
           var html_str = null;
 
@@ -64,49 +93,33 @@ function replaceStockSymbols(){
           }
 
           parsed_quotes[quote.Symbol] = html_str;
-        });
-      }else{
-        var quote = quotes;
-        var change = quote.Change;
-        var html_str = null;
-
-        if( change === undefined ){ change = '0'; }
-        var quote_dict = {
-          'symbol':quote.Symbol,
-          'quote':quote.LastTradePriceOnly,
-          'change':quote.ChangeinPercent
-        };
-
-        if( change.indexOf("+") != -1 ){
-          html_str = _.template(pos_tmpl, quote_dict);
-        }else if( change.indexOf("-") != -1 ){
-          html_str = _.template(neg_tmpl, quote_dict);
-        }else{
-          html_str = _.template(neu_tmpl, quote_dict);
         }
 
-        parsed_quotes[quote.Symbol] = html_str;
-      }
-
-      $tt.each(tweets,function(){
-        var that = this;
-        var tweet_html = $tt(that).html();
-        tweet_html = tweet_html.replace(symbol_pat,function(){
-          var sym_match = arguments[2];
-          if( _.has(parsed_quotes, sym_match) ){
-            tweet_html = tweet_html.replace(arguments[0],parsed_quotes[sym_match]);
-            $tt(that).html(tweet_html);
-          }
+	//Iterate over tweets in stream
+        $tt.each(tweets,function(){
+          var that = this;
+          var tweet_html = $tt(that).html();
+          tweet_html = tweet_html.replace(symbol_pat,function(){
+            var sym_match = arguments[2];
+            //Check if pattern found is in results dictionary
+            if( _.has(parsed_quotes, sym_match) ){
+	      //Replace HTML
+              tweet_html = tweet_html.replace(arguments[0],parsed_quotes[sym_match]);
+              $tt(that).html(tweet_html);
+            }
+          });
         });
       });
-    });
-  }
+    }
   }else{
+    //If not tweet text yet check back in 200ms.
     setTimeout( replaceStockSymbols, 200 );
   }
 }
 
 function queryYahooFinance(symbols, callback){
+  //Format symbols to be unique and in comma
+  //separted string.
   symbols = _.uniq(symbols);
   var symbol_str = "";
   for(i = 0; i < symbols.length; i++){
@@ -116,14 +129,16 @@ function queryYahooFinance(symbols, callback){
       symbol_str+="'"+symbol+"',";
     }else{ symbol_str +="'"+symbol+"'"; }
   }
+
+  //Create values for Yahoo Finance API call.
   var YAHOO_API_URL = 'http://query.yahooapis.com/v1/public/yql'
   var format = 'json'
   var query = 'select * from yahoo.finance.quotes where symbol in ("'+symbol_str+'")';
   var env = "store://datatables.org/alltableswithkeys";
 
+  //Make Yahoo Finance API request.
   $tt.ajax({
     'url':YAHOO_API_URL,
-    'async':false,
     'method':'GET',
     'data': {
       'format':format,
