@@ -11,7 +11,7 @@
 .yahooLink:hover{text-decoration:none;}
 .symWrap{
 	padding:2px;
-	margin:3px 2px;
+	margin:1px;
 	border:1px solid;
 	font-weight:bold;
 	border-radius:5px;
