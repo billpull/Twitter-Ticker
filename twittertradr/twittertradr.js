@@ -1,18 +1,20 @@
-$(function(){
+var $tt = jQuery.noConflict();
+
+$tt(function(){
     replaceStockSymbols();
 
-   $('.new-tweets-bar').click(function(){
+   $tt('.new-tweets-bar').click(function(){
 	setTimeout(replaeStockSymbols, 500);
    });
 });
 
 function replaceStockSymbols(){
-	if( $('.js-tweet-text').html() ){
-		var tweets = $('.js-tweet-text');
+	if( $tt('.js-tweet-text').html() ){
+		var tweets = $tt('.js-tweet-text');
 		var symbol_pat = /(\$)([a-z]+\b)/gi;
-		$.each(tweets, function(){
+		$tt.each(tweets, function(){
 		   var that = this;
-		   var tweet_html = $(that).html();
+		   var tweet_html = $tt(that).html();
            	   tweet_html = tweet_html.replace(symbol_pat,function(){
 			   var replace_args = arguments;
 			   var symbol = replace_args[2];
@@ -22,7 +24,7 @@ function replaceStockSymbols(){
 			   var env = "store://datatables.org/alltableswithkeys";
 			   var finance_pg = "http://finance.yahoo.com/q?s="+symbol.toLowerCase()+"&ql=1";
 
-			   $.ajax({
+			   $tt.ajax({
 				'url':YAHOO_API_URL,
 				'async':false,
 				'method':'GET',
@@ -45,15 +47,19 @@ function replaceStockSymbols(){
 						tooltip_str = '<span class="symInfo up"><span class="regTxt">'+quote_price+'</span> ('+change_pct+')</span>';
 						html_str = '<span class="symWrap up">'+symbol+tooltip_str+'</span>';
 						html_str = '<a class="yahooLink" target="_blank" href="'+finance_pg+'">'+html_str+'</a>';
-					  }else{
+					  }else if( change.indexOf("-") != -1 ){
 						tooltip_str = '<span class="symInfo down"><span class="regTxt">'+quote_price+'</span> ('+change_pct+')</span>';
 						html_str = '<span class="symWrap down">'+symbol+tooltip_str+'</span>';
+						html_str = '<a class="yahooLink" target="_blank" href="'+finance_pg+'">'+html_str+'</a>';
+					  }else{
+						tooltip_str = '<span class="symInfo nochange"><span class="regTxt">'+quote_price+'</span> ('+change_pct+')</span>';
+						html_str = '<span class="symWrap nochange">'+symbol+tooltip_str+'</span>';
 						html_str = '<a class="yahooLink" target="_blank" href="'+finance_pg+'">'+html_str+'</a>';
 					  }
 					}
 
 					tweet_html = tweet_html.replace(replace_args[0],html_str);
-					$(that).html(tweet_html);
+					$tt(that).html(tweet_html);
 				}
 			}
 		   });
