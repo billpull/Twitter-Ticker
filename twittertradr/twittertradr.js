@@ -68,9 +68,6 @@ var twitterTradr = {
 
     var symbol_str = clean_symbols.join(",");
 
-    console.log(symbols);
-    console.log(symbol_str);
-
     var urlSymbolStr = encodeURIComponent(symbol_str);
     var yahooJSONUrl = "https://query.yahooapis.com/v1/public/yql?q=select%20*%20from%20yahoo.finance.quotes%20where%20symbol%20in%20(" + urlSymbolStr + ")%0A%09%09&format=json&diagnostics=true&env=http%3A%2F%2Fdatatables.org%2Falltables.env";
 
@@ -84,7 +81,7 @@ var twitterTradr = {
   replaceStockSymbols : function (tweets){
     //Search Document for $SYMBOL pattern
     var symbol_pat = /(\$)([a-z]+\b)/gi;
-    var twitter_html = $tt('body').html();
+    var twitter_html = $tt('body').text();
     var symbols = twitter_html.match(symbol_pat);
 
     if ( symbols ){
