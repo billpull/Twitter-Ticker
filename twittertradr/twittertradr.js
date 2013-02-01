@@ -1,62 +1,99 @@
 var $tt = jQuery.noConflict();
 
-/*===Templates===*/
-var pos_tmpl = "\
-	<a class='yahooLink' target='_blank' href='http://finance.yahoo.com/q?s=<%= symbol %>&ql=1'>\
-		<span class='symWrap up'><%= symbol %>\
-			<span class='symInfo up'>\
-				<span class='regTxt'><%= quote %></span> (<%= change %>)\
-			</span>\
-		</span>\
-	</a>";
-var neg_tmpl = "\
-	<a class='yahooLink' target='_blank' href='http://finance.yahoo.com/q?s=<%= symbol %>&ql=1'>\
-		<span class='symWrap down'><%= symbol %>\
-			<span class='symInfo down'>\
-				<span class='regTxt'><%= quote %></span> (<%= change %>)\
-			</span>\
-		</span>\
-	</a>";
-var neu_tmpl = "\
-	<a class='yahooLink' target='_blank' href='http://finance.yahoo.com/q?s=<%= symbol %>&ql=1'>\
-		<span class='symWrap nochange'><%= symbol %>\
-			<span class='symInfo nochange'>\
-				<span class='regTxt'><%= quote %></span> (<%= change %>)\
-			</span>\
-		</span>\
-	</a>";
-var iframe_tmpl = "<iframe src='<%= yahooURL %>' id='tweetTraderFrame' style='display:none;' />";
+var twitterTradr = {
 
-var initalCashTagTweets = $tt('.twitter-cashtag');
+  tmpl : {
+    pos : "\
+    	<a class='yahooLink' target='_blank' href='http://finance.yahoo.com/q?s=<%= symbol %>&ql=1'>\
+    		<span class='symWrap up'><%= symbol %>\
+    			<span class='symInfo up'>\
+    				<span class='regTxt'><%= quote %></span> (<%= change %>)\
+    			</span>\
+    		</span>\
+    	</a>",
 
-function repeatReplaceStocks () {
-  var currentCashTagTweets = $tt('.twitter-cashtag');
+    neg : "\
+    	<a class='yahooLink' target='_blank' href='http://finance.yahoo.com/q?s=<%= symbol %>&ql=1'>\
+    		<span class='symWrap down'><%= symbol %>\
+    			<span class='symInfo down'>\
+    				<span class='regTxt'><%= quote %></span> (<%= change %>)\
+    			</span>\
+    		</span>\
+    	</a>",
+    
+    neu : "\
+    	<a class='yahooLink' target='_blank' href='http://finance.yahoo.com/q?s=<%= symbol %>&ql=1'>\
+    		<span class='symWrap nochange'><%= symbol %>\
+    			<span class='symInfo nochange'>\
+    				<span class='regTxt'><%= quote %></span> (<%= change %>)\
+    			</span>\
+    		</span>\
+    	</a>"
+  },
 
-  if (currentCashTagTweets.length > initalCashTagTweets.length) {
-    replaceStockSymbols(currentCashTagTweets);
-  }
-}
+  cachedQuotes : {},
 
-$tt(function(){
-    replaceStockSymbols(initalCashTagTweets);
-    window.setInterval(function(){repeatReplaceStocks()}, 200);
-});
+  initalCashTagTweets : $tt('.twitter-cashtag'),
 
-function replaceStockSymbols(tweets){
-  //Search Document for $SYMBOL pattern
-  var symbol_pat = /(\$)([a-z]+\b)/gi;
-  var twitter_html = $tt('body').html();
-  var symbols = twitter_html.match(symbol_pat);
+  initCachedQuotes : function () {
+    var localStoreQutoes = localStorage.getItem('twitterTradrQuotes');
 
-  if ( symbols ){
-     queryYahooFinance(symbols, function(data){
-      var quotes = data.query.results.quote;
-      var parsed_quotes = {};
+    if ( localStoreQutoes !== null && localStoreQutoes){
+      twitterTradr.cachedQuotes = $tt.parseJSON(localStoreQutoes);
+    }
+  },
 
-      //Iterate over query results
-      if( quotes.length !== undefined){
-        $tt.each(quotes, function(){
-          var quote = this;
+  repeatReplaceStocks : function () {
+    var currentCashTagTweets = $tt('.twitter-cashtag');
+
+    if (currentCashTagTweets.length > twitterTradr.initalCashTagTweets.length) {
+      twitterTradr.replaceStockSymbols(currentCashTagTweets);
+    }
+  },
+
+  replaceTweetHtml : function (cashtag, quote) {
+    if (twitterTradr.cachedQuotes[quote]){
+      cashtag.replaceWith(twitterTradr.cachedQuotes[quote]);
+    }
+  },
+
+  queryYahooFinance : function (symbols, callback){
+    var badSymbols = ["$bundle", "$components", "$lib"];
+
+    var clean_symbols = _.chain(symbols)
+          .uniq()
+          .filter(function (sym) { return badSymbols.indexOf(sym) == -1; })
+          .map(function (sym) { return '"' + sym.replace("$", "") + '"'; })
+          .value();
+
+    var symbol_str = clean_symbols.join(",");
+
+    console.log(symbols);
+    console.log(symbol_str);
+
+    var urlSymbolStr = encodeURIComponent(symbol_str);
+    var yahooJSONUrl = "https://query.yahooapis.com/v1/public/yql?q=select%20*%20from%20yahoo.finance.quotes%20where%20symbol%20in%20(" + urlSymbolStr + ")%0A%09%09&format=json&diagnostics=true&env=http%3A%2F%2Fdatatables.org%2Falltables.env";
+
+    $tt.ajax({
+      url : yahooJSONUrl,
+      type : 'GET',
+      success: callback
+    });
+  },
+
+  replaceStockSymbols : function (tweets){
+    //Search Document for $SYMBOL pattern
+    var symbol_pat = /(\$)([a-z]+\b)/gi;
+    var twitter_html = $tt('body').html();
+    var symbols = twitter_html.match(symbol_pat);
+
+    if ( symbols ){
+       twitterTradr.queryYahooFinance(symbols, function(data){
+        var quotes = data.query.results.quote;
+
+        //Iterate over query results
+        for (var i=0; i < quotes.length; i++) {
+          var quote = quotes[i];
           var change = quote.Change;
           var html_str = null;
 
@@ -71,67 +108,38 @@ function replaceStockSymbols(tweets){
 
            //Render template strings
           if( change.indexOf("+") != -1 ){
-            html_str = _.template(pos_tmpl, quote_dict);
+            html_str = _.template(twitterTradr.tmpl.pos, quote_dict);
           }else if( change.indexOf("-") != -1 ){
-            html_str = _.template(neg_tmpl, quote_dict);
+            html_str = _.template(twitterTradr.tmpl.neg, quote_dict);
           }else{
-            html_str = _.template(neu_tmpl, quote_dict);
+            html_str = _.template(twitterTradr.tmpl.neu, quote_dict);
           }
 
-    //Create dictionary of symbol:html
-          parsed_quotes[quote.Symbol] = html_str;
-        });
-      }else{
-        var quote = quotes;
-        var change = quote.Change;
-        var html_str = null;
-
-        if (!change){
-            change = "0";
-        }
-        var quote_dict = {
-          'symbol':quote.Symbol,
-          'quote':quote.LastTradePriceOnly,
-          'change':quote.ChangeinPercent
-        };
-
-        if( change.indexOf("+") != -1 ){
-          html_str = _.template(pos_tmpl, quote_dict);
-        }else if( change.indexOf("-") != -1 ){
-          html_str = _.template(neg_tmpl, quote_dict);
-        }else{
-          html_str = _.template(neu_tmpl, quote_dict);
+          //Create dictionary of symbol:html
+          twitterTradr.cachedQuotes[quote.Symbol] = html_str;
         }
 
-        parsed_quotes[quote.Symbol] = html_str;
-      }
+        localStorage.setItem('twitterTradrQuotes', JSON.stringify(twitterTradr.cachedQuotes))
+        
+       //Iterate over tweets in stream
+       for (var k=0; k < tweets.length; k++) {
+          var cashtag = $tt(tweets[k]);
+          var quote = cashtag.text().replace("$", "");
+          twitterTradr.replaceTweetHtml(cashtag, quote);
+        }
+      });
+    }
 
-     //Iterate over tweets in stream
-     for (var i=0; i < tweets.length; i++) {
-        var cashtag = $tt(tweets[i]);
-        var quote = cashtag.text().replace("$", "");
-        if (parsed_quotes[quote])
-          cashtag.replaceWith(parsed_quotes[quote]);
-      }
-    });
-  }
+  },
 
-}
+  init : function(){
+      twitterTradr.initCachedQuotes();
+      twitterTradr.replaceStockSymbols(twitterTradr.initalCashTagTweets);
+      window.setInterval(function(){twitterTradr.repeatReplaceStocks()}, 200);
+  },
+};
 
-function queryYahooFinance(symbols, callback){
-  //Format symbols to be unique and in comma
-  //separted string.
-  uniq_symbols = _.uniq(symbols);
-  cleaned_symbols = _.map(uniq_symbols, function (sym) { return '"' + sym.replace("$", "") + '"'; });
-  var symbol_str = cleaned_symbols.join(",");
-
-  var urlSymbolStr = encodeURIComponent(symbol_str);
-  var yahooJSONUrl = "https://query.yahooapis.com/v1/public/yql?q=select%20*%20from%20yahoo.finance.quotes%20where%20symbol%20in%20(" + urlSymbolStr + ")%0A%09%09&format=json&diagnostics=true&env=http%3A%2F%2Fdatatables.org%2Falltables.env";
-
-  $tt.ajax({
-    url : yahooJSONUrl,
-    type : 'GET',
-    success: callback
-  });
-}
+$tt(function() {
+  twitterTradr.init();
+});
 
