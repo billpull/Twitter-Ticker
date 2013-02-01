@@ -52,7 +52,7 @@ var twitterTradr = {
   },
 
   replaceTweetHtml : function (cashtag, quote) {
-    if (twitterTradr.cachedQuotes[quote]){
+    if (twitterTradr.cachedQuotes[quote.toUpperCase()]){
       cashtag.replaceWith(twitterTradr.cachedQuotes[quote]);
     }
   },
@@ -61,12 +61,14 @@ var twitterTradr = {
     var badSymbols = ["$bundle", "$components", "$lib"];
 
     var clean_symbols = _.chain(symbols)
-          .uniq()
           .filter(function (sym) { return badSymbols.indexOf(sym) == -1; })
-          .map(function (sym) { return '"' + sym.replace("$", "") + '"'; })
+          .map(function (sym) { return '"' + sym.replace("$", "").toUpperCase() + '"'; })
+          .uniq()
           .value();
 
     var symbol_str = clean_symbols.join(",");
+
+    console.log(symbol_str);
 
     var urlSymbolStr = encodeURIComponent(symbol_str);
     var yahooJSONUrl = "https://query.yahooapis.com/v1/public/yql?q=select%20*%20from%20yahoo.finance.quotes%20where%20symbol%20in%20(" + urlSymbolStr + ")%0A%09%09&format=json&diagnostics=true&env=http%3A%2F%2Fdatatables.org%2Falltables.env";
