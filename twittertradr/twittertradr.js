@@ -46,7 +46,7 @@ var twitterTradr = {
   repeatReplaceStocks : function () {
     var currentCashTagTweets = $tt('.twitter-cashtag');
 
-    if (currentCashTagTweets.length > twitterTradr.initalCashTagTweets.length) {
+    if (currentCashTagTweets.length) {
       twitterTradr.replaceStockSymbols(currentCashTagTweets);
     }
   },
@@ -60,24 +60,31 @@ var twitterTradr = {
   queryYahooFinance : function (symbols, callback){
     var badSymbols = ["$bundle", "$components", "$lib"];
 
+    var currentSymbols = [];
+    for (var sym in twitterTradr.cachedQuotes) {
+      var symStr = sym.toString();
+      currentSymbols.push(symStr);
+    }
+
     var clean_symbols = _.chain(symbols)
           .filter(function (sym) { return badSymbols.indexOf(sym) == -1; })
+          .filter(function (sym) { return currentSymbols.indexOf(sym) == -1 })
           .map(function (sym) { return '"' + sym.replace("$", "").toUpperCase() + '"'; })
           .uniq()
           .value();
 
-    var symbol_str = clean_symbols.join(",");
+    if (clean_symbols.length > 0) {
+      var symbol_str = clean_symbols.join(",");
 
-    console.log(symbol_str);
+      var urlSymbolStr = encodeURIComponent(symbol_str);
+      var yahooJSONUrl = "https://query.yahooapis.com/v1/public/yql?q=select%20*%20from%20yahoo.finance.quotes%20where%20symbol%20in%20(" + urlSymbolStr + ")%0A%09%09&format=json&diagnostics=true&env=http%3A%2F%2Fdatatables.org%2Falltables.env";
 
-    var urlSymbolStr = encodeURIComponent(symbol_str);
-    var yahooJSONUrl = "https://query.yahooapis.com/v1/public/yql?q=select%20*%20from%20yahoo.finance.quotes%20where%20symbol%20in%20(" + urlSymbolStr + ")%0A%09%09&format=json&diagnostics=true&env=http%3A%2F%2Fdatatables.org%2Falltables.env";
-
-    $tt.ajax({
-      url : yahooJSONUrl,
-      type : 'GET',
-      success: callback
-    });
+      $tt.ajax({
+        url : yahooJSONUrl,
+        type : 'GET',
+        success: callback
+      });
+    }
   },
 
   replaceStockSymbols : function (tweets){
@@ -119,26 +126,22 @@ var twitterTradr = {
         }
 
         localStorage.setItem('twitterTradrQuotes', JSON.stringify(twitterTradr.cachedQuotes))
-        
-       //Iterate over tweets in stream
-       for (var k=0; k < tweets.length; k++) {
-          var cashtag = $tt(tweets[k]);
-          var quote = cashtag.text().replace("$", "");
-          twitterTradr.replaceTweetHtml(cashtag, quote);
-        }
       });
+
+      //Iterate over tweets in stream
+      for (var k=0; k < tweets.length; k++) {
+        var cashtag = $tt(tweets[k]);
+        var quote = cashtag.text().replace("$", "");
+        twitterTradr.replaceTweetHtml(cashtag, quote);
+      }
     }
 
-  },
-
-  init : function(){
-      twitterTradr.initCachedQuotes();
-      twitterTradr.replaceStockSymbols(twitterTradr.initalCashTagTweets);
-      window.setInterval(function(){twitterTradr.repeatReplaceStocks()}, 200);
-  },
+  }
 };
 
 $tt(function() {
-  twitterTradr.init();
+    twitterTradr.initCachedQuotes();
+    twitterTradr.replaceStockSymbols(twitterTradr.initalCashTagTweets);
+    window.setInterval(function(){twitterTradr.repeatReplaceStocks()}, 200);
 });
 
