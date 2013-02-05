@@ -28,7 +28,21 @@ var twitterTradr = {
     				<span class='regTxt'><%= quote %></span> (<%= change %>)\
     			</span>\
     		</span>\
-    	</a>"
+    	</a>",
+
+    chartList : "\
+      <div id='tt-chart-draw'>\
+        <ul id='tt-charts'></ul>\
+        <div id='tt-handle'></div>\
+      </div>",
+
+    chartItem : "\
+        <li class='tt-chart-item'>\
+          <div class='tt-header'><%= headerHtml %></div>\
+          <div class='tt-body'>\
+            <img src='http://chart.finance.yahoo.com/t?s=<%= quote %>&lang=en-US&region=US&width=280&height=160' />\
+          </div>\
+        </li>"
   },
 
   cachedQuotes : {},
@@ -136,12 +150,36 @@ var twitterTradr = {
       }
     }
 
+  },
+
+  initDrawer : function () {
+    $tt('body').append(twitterTradr.tmpl.chartList);
+  },
+
+  addSymCharts : function () {
+    $tt('#tt-charts').html('');
+    for (var sym in twitterTradr.cachedQuotes) {
+      var tmplDict = {
+        quote: sym.toString(),
+        headerHtml: twitterTradr.cachedQuotes[sym]
+      };  
+      var chartItemHtml = _.template(twitterTradr.tmpl.chartItem, tmplDict);
+      $tt('#tt-charts').append(chartItemHtml);
+    }
   }
 };
 
 $tt(function() {
+    twitterTradr.initDrawer();
     twitterTradr.initCachedQuotes();
     twitterTradr.replaceStockSymbols(twitterTradr.initalCashTagTweets);
     window.setInterval(function(){twitterTradr.repeatReplaceStocks()}, 200);
+    twitterTradr.addSymCharts();
+    $tt('.tt-chart-item').on("click", function() {
+      $tt(this).children('.tt-body').slideToggle();
+    });
+    $tt('#tt-handle').on("click", function() {
+      $tt('#tt-charts').toggleClass('open');
+    });
 });
 

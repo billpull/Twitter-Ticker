@@ -48,3 +48,64 @@
 	box-shadow:0px 0px 3px #ccc inset;
 }
 .regTxt{ color:#333 !important; }
+
+#tt-chart-draw {
+	position:absolute;
+	display: block;
+	top: 30px;
+	left: 0;
+}
+
+#tt-charts {
+	float:left;
+	background: #fff;
+	width:300px;
+	padding-top:30px;
+	margin-left:-300px;
+}
+#tt-handle {
+	float:left;
+	background:#fff;
+	width:60px;
+	height:60px;
+	display:block;
+	margin-top:100px;
+	border-top-right-radius: 5px;
+	border-bottom-right-radius: 5px;
+	box-shadow:4px 0 5px #333;
+	background: #fff url(http://i.imgur.com/1IuGmSb.png) 0 0 no-repeat;
+	cursor: pointer;
+}
+
+.open {
+	margin-left:0 !important;
+}
+
+#tt-chart-draw li{
+	padding:10px 20px;
+	border-bottom:1px solid #555;
+	cursor:pointer;
+}
+
+#tt-chart-draw img {
+	width:260px;
+}
+.tt-body {
+	display: none; 
+}
+
+#tt-chart-draw li:nth-child(even){
+	background: #f5f5f5;
+}
+
+#tt-chart-draw li:hover {
+	background: #eee;
+}
+
+.tt-header .symWrap{
+	background: none;
+	border: 0;
+}
+.tt-header .symInfo {
+	float: right;
+}
